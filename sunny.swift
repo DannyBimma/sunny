@@ -46,3 +46,29 @@ enum SoldierDock: Int {
         }
     }
 }
+
+// TEST: Display info for each dock
+print("=== THOUSAND SUNNY SOLDIER DOCK SYSTEM ===\n")
+
+let dock1 = SoldierDock.shiroMokuba
+dock1.displayInfo(for: .shiroMokuba)
+print()
+
+let dock2 = SoldierDock.miniMerry
+dock2.displayInfo(for: .miniMerry)
+print()
+
+let dock3 = SoldierDock.sharkSubmerge
+dock3.displayInfo(for: .sharkSubmerge)
+print()
+
+let dock4 = SoldierDock.kruosaiIV
+dock4.displayInfo(for: .kruosaiIV)
+print()
+
+let dock5 = SoldierDock.brachioTankV
+dock5.displayInfo(for: .brachioTankV)
+print()
+
+let dock6 = SoldierDock.inflatablePool
+dock6.displayInfo(for: .inflatablePool)
