@@ -6,6 +6,9 @@ Date: 2025-10-24
 Copyright: 2025 Technomancer Pirate Captain
 */
 
+import CoreLocation
+import Foundation
+
 // Create a struct to represent The Sunny's coordinates
 struct Coordinate {
     let degrees: Int
@@ -15,6 +18,87 @@ struct Coordinate {
     /// Format the coordinate as a string
     func formatted() -> String {
         return "\(degrees)° \(minutes)'\(seconds)\""
+    }
+
+    /// Get user's real location coordinates
+    static func getUserLocation() -> (latitude: Coordinate, longitude: Coordinate)? {
+        let locator = LocationFetcher()
+
+        return locator.fetchCurrentLocation()
+    }
+
+    /// Convert decimal degrees to (Degrees, Minutes, Seconds)
+    static func fromDecimalDegrees(_ decimal: Double) -> Coordinate {
+        let absolute = abs(decimal)
+        let degrees = Int(absolute)
+        let minutesDecimal = (absolute - Double(degrees)) * 60
+        let minutes = Int(minutesDecimal)
+        let seconds = Int((minutesDecimal - Double(minutes)) * 60)
+
+        return Coordinate(degrees: degrees, minutes: minutes, seconds: seconds)
+    }
+}
+
+// Create a class to fetch location using CoreLocation
+class LocationFetcher: NSObject, CLLocationManagerDelegate {
+    private let locationManager = CLLocationManager()
+    private var currentLocation: CLLocation?
+    private let semaphore = DispatchSemaphore(value: 0)
+
+    override init() {
+        super.init()
+        locationManager.delegate = self
+        locationManager.desiredAccuracy = kCLLocationAccuracyBest
+    }
+
+    func fetchCurrentLocation() -> (latitude: Coordinate, longitude: Coordinate)? {
+        // Request location authorisation
+        locationManager.requestWhenInUseAuthorization()
+
+        // Request a single location update
+        locationManager.requestLocation()
+
+        // Wait for location (with timeout)
+        let timeout = DispatchTime.now() + .seconds(10)
+        let result = semaphore.wait(timeout: timeout)
+
+        guard result == .success, let location = currentLocation else {
+            print(
+                "Coordinates are unknown and mysterious. Make sure location services are enabled.")
+
+            return nil
+        }
+
+        // Convert to Coordinate format
+        let latCoord = Coordinate.fromDecimalDegrees(location.coordinate.latitude)
+        let lonCoord = Coordinate.fromDecimalDegrees(location.coordinate.longitude)
+
+        return (latitude: latCoord, longitude: lonCoord)
+    }
+
+    // CLLocationManagerDelegate methods
+    func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
+        if let location = locations.first {
+            currentLocation = location
+            semaphore.signal()
+        }
+    }
+
+    func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
+        print("Location error: \(error.localizedDescription)")
+        semaphore.signal()
+    }
+
+    func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
+        switch manager.authorizationStatus {
+        case .notDetermined:
+            manager.requestWhenInUseAuthorization()
+        case .denied, .restricted:
+            print("Location access denied. Please enable location services in System Preferences.")
+            semaphore.signal()
+        default:
+            break
+        }
     }
 }
 
