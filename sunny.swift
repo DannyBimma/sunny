@@ -6,6 +6,18 @@ Date: 2025-10-24
 Copyright: 2025 Technomancer Pirate Captain
 */
 
+// Create a struct to represent The Sunny's coordinates
+struct Coordinate {
+    let degrees: Int
+    let minutes: Int
+    let seconds: Int
+
+    /// Format the coordinate as a string
+    func formatted() -> String {
+        return "\(degrees)° \(minutes)'\(seconds)\""
+    }
+}
+
 // Create an enum for the Soldier Dock System
 enum SoldierDock: Int {
     // Dock contents
