@@ -102,6 +102,17 @@ class LocationFetcher: NSObject, CLLocationManagerDelegate {
     }
 }
 
+// TEST: Get the user's real location
+print("\n=== THE THOUSAND SUNNY'S CURRENT COORDINATES ===\n")
+print("Fetching current location...")
+
+if let location = Coordinate.getUserLocation() {
+    print("Latitude: \(location.latitude.formatted())")
+    print("Longitude: \(location.longitude.formatted())")
+} else {
+    print("Unable to determine current coordinates.")
+}
+
 // Create an enum for the Soldier Dock System
 enum SoldierDock: Int {
     // Dock contents
@@ -168,3 +179,4 @@ print()
 
 let dock6 = SoldierDock.inflatablePool
 dock6.displayInfo(for: .inflatablePool)
+print()
