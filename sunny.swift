@@ -20,6 +20,14 @@ struct Coordinate {
         return "\(degrees)° \(minutes)'\(seconds)\""
     }
 
+    /// Convert (Degrees, Minutes, Seconds) back to decimal degrees
+    func toDecimalDegrees() -> Double {
+        let decimalMinutes = Double(minutes) / 60.0
+        let decimalSeconds = Double(seconds) / 3600.0
+
+        return Double(degrees) + decimalMinutes + decimalSeconds
+    }
+
     /// Get user's real location coordinates
     static func getUserLocation() -> (latitude: Coordinate, longitude: Coordinate)? {
         let locator = LocationFetcher()
