@@ -131,10 +131,8 @@ class LocationFetcher: NSObject, CLLocationManagerDelegate {
     }
 }
 
-// Coup De Burst system - propels the ship 1 km forward (north)
 struct CoupDeBurst {
     /// Execute the Coup De Burst maneuver
-    /// Propels the ship 1 kilometer straight north using compressed air
     static func execute(from location: (latitude: Coordinate, longitude: Coordinate)) -> (
         latitude: Coordinate, longitude: Coordinate
     ) {
@@ -147,13 +145,21 @@ struct CoupDeBurst {
     }
 }
 
-// TEST: Get the user's real location
+// TEST: Get the user's real location and execute Coup De Burst
 print("\n=== THE THOUSAND SUNNY'S CURRENT COORDINATES ===\n")
 print("Fetching current location...")
 
 if let location = Coordinate.getUserLocation() {
-    print("Latitude: \(location.latitude.formatted())")
-    print("Longitude: \(location.longitude.formatted())")
+    print("Initial Position:")
+    print("  Latitude:  \(location.latitude.formatted())")
+    print("  Longitude: \(location.longitude.formatted())")
+
+    // Activate Coup De Burst
+    let newLocation = CoupDeBurst.execute(from: location)
+
+    print("New Position:")
+    print("  Latitude:  \(newLocation.latitude.formatted())")
+    print("  Longitude: \(newLocation.longitude.formatted())")
 } else {
     print("Unable to determine current coordinates.")
 }
