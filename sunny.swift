@@ -45,6 +45,27 @@ struct Coordinate {
 
         return Coordinate(degrees: degrees, minutes: minutes, seconds: seconds)
     }
+
+    /// Move location north by specified distance in kilometers
+    /// Returns new (latitude, longitude) coordinates
+    static func moveNorth(
+        from location: (latitude: Coordinate, longitude: Coordinate), distanceKm: Double
+    ) -> (latitude: Coordinate, longitude: Coordinate) {
+        // Convert current coordinates to decimal degrees
+        let currentLat = location.latitude.toDecimalDegrees()
+        let currentLon = location.longitude.toDecimalDegrees()
+
+        // Calculate new latitude
+        // 1 degree of latitude ≈ 111 km
+        let latitudeChange = distanceKm / 111.0
+        let newLat = currentLat + latitudeChange
+
+        // Longitude stays the same when moving straight north
+        let newLatCoord = Coordinate.fromDecimalDegrees(newLat)
+        let newLonCoord = Coordinate.fromDecimalDegrees(currentLon)
+
+        return (latitude: newLatCoord, longitude: newLonCoord)
+    }
 }
 
 // Create a class to fetch location using CoreLocation
