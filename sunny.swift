@@ -131,6 +131,22 @@ class LocationFetcher: NSObject, CLLocationManagerDelegate {
     }
 }
 
+// Coup De Burst system - propels the ship 1 km forward (north)
+struct CoupDeBurst {
+    /// Execute the Coup De Burst maneuver
+    /// Propels the ship 1 kilometer straight north using compressed air
+    static func execute(from location: (latitude: Coordinate, longitude: Coordinate)) -> (
+        latitude: Coordinate, longitude: Coordinate
+    ) {
+        print("\n=== COUP DE BURST ACTIVATED ===")
+        print("Releasing compressed air from stern...")
+        print("BOOOOOOOOM!")
+        print("The Thousand Sunny launches 1 kilometer north!\n")
+
+        return Coordinate.moveNorth(from: location, distanceKm: 1.0)
+    }
+}
+
 // TEST: Get the user's real location
 print("\n=== THE THOUSAND SUNNY'S CURRENT COORDINATES ===\n")
 print("Fetching current location...")
