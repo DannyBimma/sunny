@@ -47,7 +47,6 @@ struct Coordinate {
     }
 
     /// Move location north by specified distance in kilometers
-    /// Returns new (latitude, longitude) coordinates
     static func moveNorth(
         from location: (latitude: Coordinate, longitude: Coordinate), distanceKm: Double
     ) -> (latitude: Coordinate, longitude: Coordinate) {
