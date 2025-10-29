@@ -203,6 +203,30 @@ enum SoldierDock: Int {
             print("Large inflatable pool for relaxation purposes.")
         }
     }
+
+    // Launch a vehicle from the dock
+    func launch() {
+        switch self {
+        case .shiroMokuba:
+            print("Launching Shiro Mokuba from Channel 1...")
+            print("Nami's waver speeds across the water!")
+        case .miniMerry:
+            print("Launching the Mini Merry from Channel 2...")
+            print("The mini shopping boat sets sail!")
+        case .sharkSubmerge:
+            print("Launching Shark Submerge from Channel 3...")
+            print("Baby Meg dives beneath the waves!")
+        case .kruosaiIV:
+            print("Launching Kurosai IV from Channel 4...")
+            print("The giant motorised rhinoceros roars to life!")
+        case .brachioTankV:
+            print("Launching Brachio Tank V from Channel 5...")
+            print("The dinosaur tank rumbles forward with devastating power!")
+        case .inflatablePool:
+            print("Launching Inflatable Pool from Channel 6...")
+            print("Suns out, buns out... but make sue Sanji is locked in!!")
+        }
+    }
 }
 
 // TEST: Display info for each dock
@@ -230,4 +254,13 @@ print()
 
 let dock6 = SoldierDock.inflatablePool
 dock6.displayInfo(for: .inflatablePool)
+print()
+
+// TEST: Launch vehicles from Soldier Dock
+print("\n=== LAUNCHING VEHICLES ===\n")
+
+dock3.launch()
+print()
+
+dock5.launch()
 print()
