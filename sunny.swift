@@ -65,6 +65,26 @@ struct Coordinate {
 
         return (latitude: newLatCoord, longitude: newLonCoord)
     }
+
+    // Move location south by specified distance in kilometers
+    static func moveSouth(
+        from location: (latitude: Coordinate, longitude: Coordinate), distanceKm: Double
+    ) -> (latitude: Coordinate, longitude: Coordinate) {
+        // Convert current coordinates to decimal degrees
+        let currentLat = location.latitude.toDecimalDegrees()
+        let currentLon = location.longitude.toDecimalDegrees()
+
+        // Calculate new latitude
+        // 1 degree of latitude ≈ 111 km
+        let latitudeChange = distanceKm / 111.0
+        let newLat = currentLat - latitudeChange
+
+        // Longitude stays the same when moving straight north
+        let newLatCoord = Coordinate.fromDecimalDegrees(newLat)
+        let newLonCoord = Coordinate.fromDecimalDegrees(currentLon)
+
+        return (latitude: newLatCoord, longitude: newLonCoord)
+    }
 }
 
 // Create a class to fetch location using CoreLocation
@@ -138,7 +158,7 @@ struct CoupDeBurst {
         print("\n=== COUP DE BURST ACTIVATED ===")
         print("Releasing compressed air from stern...")
         print("BOOOOOOOOM!")
-        print("The Thousand Sunny launches 1 kilometer north!\n")
+        print("The Thousand Sunny has been launched 1 kilometer north!\n")
 
         return Coordinate.moveNorth(from: location, distanceKm: 1.0)
     }
