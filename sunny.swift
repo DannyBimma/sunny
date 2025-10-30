@@ -66,7 +66,8 @@ struct Coordinate {
         return (latitude: newLatCoord, longitude: newLonCoord)
     }
 
-    // Move location south by specified distance in kilometers
+    /// Move location south by specified distance in kilometers
+    /// Returns new (latitude, longitude) coordinates
     static func moveSouth(
         from location: (latitude: Coordinate, longitude: Coordinate), distanceKm: Double
     ) -> (latitude: Coordinate, longitude: Coordinate) {
@@ -79,7 +80,7 @@ struct Coordinate {
         let latitudeChange = distanceKm / 111.0
         let newLat = currentLat - latitudeChange
 
-        // Longitude stays the same when moving straight north
+        // Longitude stays the same when moving straight south
         let newLatCoord = Coordinate.fromDecimalDegrees(newLat)
         let newLonCoord = Coordinate.fromDecimalDegrees(currentLon)
 
@@ -164,6 +165,21 @@ struct CoupDeBurst {
     }
 }
 
+struct ChickenVoyage {
+    /// Execute the Chicken Voyage maneuver
+    static func execute(from location: (latitude: Coordinate, longitude: Coordinate)) -> (
+        latitude: Coordinate, longitude: Coordinate
+    ) {
+        print("\n=== CHICKEN VOYAGE ACTIVATED ===")
+        print("Tactical retreat engaged!")
+        print("Releasing compressed air from bow...")
+        print("WHOOOOOOSH!")
+        print("The Thousand Sunny has retreated 1 kilometer south!\n")
+
+        return Coordinate.moveSouth(from: location, distanceKm: 1.0)
+    }
+}
+
 // TEST: Get the user's real location and execute Coup De Burst
 print("\n=== THE THOUSAND SUNNY'S CURRENT COORDINATES ===\n")
 print("Fetching current location...")
@@ -176,9 +192,16 @@ if let location = Coordinate.getUserLocation() {
     // Activate Coup De Burst
     let newLocation = CoupDeBurst.execute(from: location)
 
-    print("New Position:")
+    print("New Position (after Coup De Burst):")
     print("  Latitude:  \(newLocation.latitude.formatted())")
     print("  Longitude: \(newLocation.longitude.formatted())")
+
+    // Activate Chicken Voyage
+    let retreatLocation = ChickenVoyage.execute(from: newLocation)
+
+    print("Final Position (after Chicken Voyage):")
+    print("  Latitude:  \(retreatLocation.latitude.formatted())")
+    print("  Longitude: \(retreatLocation.longitude.formatted())")
 } else {
     print("Unable to determine current coordinates.")
 }
