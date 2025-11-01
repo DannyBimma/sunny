@@ -226,6 +226,9 @@ if let location = Coordinate.getUserLocation() {
     print("Final Position (after Chicken Voyage):")
     print("  Latitude:  \(retreatLocation.latitude.formatted())")
     print("  Longitude: \(retreatLocation.longitude.formatted())")
+
+    // Activate Rabbit Screw Sukuryū
+    _ = RabbitScrew.sukuryū(from: retreatLocation)
 } else {
     print("Unable to determine current coordinates.")
 }
