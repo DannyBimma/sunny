@@ -204,6 +204,19 @@ struct RabbitScrew {
     }
 }
 
+struct GaonCannon {
+    /// Fire the Gaon Cannon
+    static func ガオン砲() {
+        print("\n=== GAON CANNON ACTIVATED ===")
+
+        print("AIR BLAST FIRED!!")
+        print("TARGET SUCESSFULY OBLITERATED!!")
+        print("\n⚠️  WARNING: Cola-Cannons depleted! Restock urgently!")
+
+        print()
+    }
+}
+
 // TEST: Get the user's real location and execute Coup De Burst
 print("\n=== THE THOUSAND SUNNY'S CURRENT COORDINATES ===\n")
 print("Fetching current location...")
@@ -232,6 +245,10 @@ if let location = Coordinate.getUserLocation() {
 } else {
     print("Unable to determine current coordinates.")
 }
+
+// TEST: Fire the Gaon Cannon
+print("\n=== WEAPONS TEST ===\n")
+GaonCannon.ガオン砲()
 
 // Create an enum for the Soldier Dock System
 enum SoldierDock: Int {
