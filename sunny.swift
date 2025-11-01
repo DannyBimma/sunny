@@ -180,6 +180,30 @@ struct ChickenVoyage {
     }
 }
 
+struct RabbitScrew {
+    /// Propel the ship 5 degrees of latitude north at max speed
+    static func sukuryū(from location: (latitude: Coordinate, longitude: Coordinate)) -> (
+        latitude: Coordinate, longitude: Coordinate
+    ) {
+        print("\n=== RABBIT SCREW: SUKURYŪ ===")
+        print(
+            "Full power activated, Sunny now going all out… buckle up or huddle down, my Mugiwaras!"
+        )
+        print("The paddle wheels spin at maximum velocity!")
+        print("VOOOOOOSSSHHHHH!")
+
+        // Move 5 degrees of latitude north (5 degrees * 111 km/degree = 555 km)
+        let newLocation = Coordinate.moveNorth(from: location, distanceKm: 555.0)
+
+        print("\nNew Position after Sukuryū Propulsion:")
+        print("  Latitude:  \(newLocation.latitude.formatted())")
+        print("  Longitude: \(newLocation.longitude.formatted())")
+        print()
+
+        return newLocation
+    }
+}
+
 // TEST: Get the user's real location and execute Coup De Burst
 print("\n=== THE THOUSAND SUNNY'S CURRENT COORDINATES ===\n")
 print("Fetching current location...")
