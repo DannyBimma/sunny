@@ -16,5 +16,7 @@
     <string>1.0</string>
     <key>NSLocationWhenInUseUsageDescription</key>
     <string>This app needs your location to display The Sunny's coordinates.</string>
+    <key>LSBackgroundOnly</key>
+    <false/>
 </dict>
 </plist>
