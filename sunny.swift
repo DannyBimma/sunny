@@ -315,6 +315,72 @@ enum SoldierDock: Int {
     }
 }
 
+enum Garden: Int {
+    case sprinkler = 1
+    case platanus_Shuriken
+    case exploding_Pinecones
+    case rafflesia
+    case trampolia
+    case humandrake
+    case sleep_Grass
+    case firework_Flowers
+    case bamboo_Javelin
+    case skull_Bomb_Grass
+    case devil
+    case impact_Wolf
+    case boaty_Banana_Fan_Grass
+    case sargasso
+
+    // Output Pop Green info
+    func displayInfo(for popGreen: Garden) {
+        switch popGreen {
+        case .sprinkler:
+            print("#1 - Sprinkler:")
+            print(
+                "A plant that sprays water, useful for putting out fires or creating distractions.")
+        case .platanus_Shuriken:
+            print("#2 - Platanus Shuriken:")
+            print("Sharp seed projectiles that can be thrown like shuriken for ranged attacks.")
+        case .exploding_Pinecones:
+            print("#3 - Exploding Pinecones:")
+            print("Explosive pinecones that detonate on impact, causing significant damage.")
+        case .rafflesia:
+            print("#4 - Rafflesia:")
+            print("A giant flower that releases a horrible stench to repel enemies.")
+        case .trampolia:
+            print("#5 - Trampolia:")
+            print("A bouncy mushroom-like plant that can launch people or objects into the air.")
+        case .humandrake:
+            print("#6 - Humandrake:")
+            print("A carnivorous plant that can grab and restrain enemies with its vines.")
+        case .sleep_Grass:
+            print("#7 - Sleep Grass:")
+            print("Releases sleep-inducing spores that knock out anyone who inhales them.")
+        case .firework_Flowers:
+            print("#8 - Firework Flowers:")
+            print("Flowers that burst into brilliant displays, useful for signals or distractions.")
+        case .bamboo_Javelin:
+            print("#9 - Bamboo Javelin:")
+            print("Fast-growing bamboo that shoots out like a spear for piercing attacks.")
+        case .skull_Bomb_Grass:
+            print("#10 - Skull Bomb Grass:")
+            print("A skull-shaped plant bomb with explosive capabilities.")
+        case .devil:
+            print("#11 - Devil:")
+            print("A devilish plant with powerful offensive capabilities.")
+        case .impact_Wolf:
+            print("#12 - Impact Wolf:")
+            print("Creates a wolf-shaped impact dial effect for devastating close-range attacks.")
+        case .boaty_Banana_Fan_Grass:
+            print("#13 - Boaty Banana Fan Grass:")
+            print("A banana-shaped plant that can be used as a boat or flotation device.")
+        case .sargasso:
+            print("#14 - Sargasso:")
+            print("Seaweed-like grass that can entangle and trap enemies.")
+        }
+    }
+}
+
 // TEST: Display info for each dock
 print("=== THOUSAND SUNNY SOLDIER DOCK SYSTEM ===\n")
 
@@ -349,4 +415,19 @@ dock3.launch()
 print()
 
 dock5.launch()
+print()
+
+// TEST: Display Pop Green info from Usopp's Garden
+print("\n=== USOPP'S GARDEN - POP GREEN INVENTORY ===\n")
+
+let popGreen1 = Garden.rafflesia
+popGreen1.displayInfo(for: .rafflesia)
+print()
+
+let popGreen2 = Garden.impact_Wolf
+popGreen2.displayInfo(for: .impact_Wolf)
+print()
+
+let popGreen3 = Garden.trampolia
+popGreen3.displayInfo(for: .trampolia)
 print()
