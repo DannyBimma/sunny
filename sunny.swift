@@ -381,6 +381,20 @@ enum Garden: Int {
     }
 }
 
+struct MikanGrove {
+    /// Attempt to access Nami's precious mikan trees
+    static func access() -> String {
+        return "UNAUTHORISED ACCESS WARNING!! CONTACTING NAMI!!"
+    }
+}
+
+struct FlowerBed {
+    /// Attempt to access Robin's flower bed
+    static func access() -> String {
+        return "UNAUTHORISED ACCESS WARNING!! CONTACTING ROBIN!!"
+    }
+}
+
 // TEST: Display info for each dock
 print("=== THOUSAND SUNNY SOLDIER DOCK SYSTEM ===\n")
 
@@ -430,4 +444,15 @@ print()
 
 let popGreen3 = Garden.trampolia
 popGreen3.displayInfo(for: .trampolia)
+print()
+
+// TEST: Try to access protected gardens
+print("\n=== RESTRICTED AREAS ===\n")
+
+print("Attempting to pick mikans...")
+print(MikanGrove.access())
+print()
+
+print("Attempting to visit flower bed...")
+print(FlowerBed.access())
 print()
