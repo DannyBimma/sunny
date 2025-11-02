@@ -2,6 +2,18 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+    <key>CFBundleExecutable</key>
+    <string>sunny</string>
+    <key>CFBundleIdentifier</key>
+    <string>com.dannybimma.sunny</string>
+    <key>CFBundleName</key>
+    <string>Thousand Sunny</string>
+    <key>CFBundlePackageType</key>
+    <string>APPL</string>
+    <key>CFBundleVersion</key>
+    <string>1.0</string>
+    <key>CFBundleShortVersionString</key>
+    <string>1.0</string>
     <key>NSLocationWhenInUseUsageDescription</key>
     <string>This app needs your location to display The Sunny's coordinates.</string>
 </dict>
