@@ -216,38 +216,44 @@ class LocationFetcher: NSObject, CLLocationManagerDelegate {
 
 struct CoupDeBurst {
     /// Execute the Coup De Burst maneuver
-    static func execute(from location: (latitude: Coordinate, longitude: Coordinate)) -> (
-        latitude: Coordinate, longitude: Coordinate
-    ) {
+    static func execute(
+        from location: (latitude: Coordinate, longitude: Coordinate), distanceKm: Double
+    ) -> (latitude: Coordinate, longitude: Coordinate) {
         print("\n=== COUP DE BURST ACTIVATED ===")
         print("Releasing compressed air from stern...")
         print("BOOOOOOOOM!")
-        print("The Thousand Sunny has been launched 1 kilometer north!\n")
 
-        return Coordinate.moveNorth(from: location, distanceKm: 1.0)
+        let distStr = String(format: "%.0f", distanceKm)
+
+        print("The Thousand Sunny has been launched \(distStr) kilometer(s) north!\n")
+
+        return Coordinate.moveNorth(from: location, distanceKm: distanceKm)
     }
 }
 
 struct ChickenVoyage {
     /// Execute the Chicken Voyage maneuver
-    static func execute(from location: (latitude: Coordinate, longitude: Coordinate)) -> (
-        latitude: Coordinate, longitude: Coordinate
-    ) {
+    static func execute(
+        from location: (latitude: Coordinate, longitude: Coordinate), distanceKm: Double
+    ) -> (latitude: Coordinate, longitude: Coordinate) {
         print("\n=== CHICKEN VOYAGE ACTIVATED ===")
         print("Tactical retreat engaged!")
         print("Releasing compressed air from bow...")
         print("WHOOOOOOSH!")
-        print("The Thousand Sunny has retreated 1 kilometer south!\n")
 
-        return Coordinate.moveSouth(from: location, distanceKm: 1.0)
+        let distStr = String(format: "%.0f", distanceKm)
+
+        print("The Thousand Sunny has retreated \(distStr) kilometer(s) south!\n")
+
+        return Coordinate.moveSouth(from: location, distanceKm: distanceKm)
     }
 }
 
 struct RabbitScrew {
-    /// Propel the ship 5 degrees of latitude north at max speed
-    static func sukuryū(from location: (latitude: Coordinate, longitude: Coordinate)) -> (
-        latitude: Coordinate, longitude: Coordinate
-    ) {
+    /// Propel the ship north at max speed, distance in kilometers
+    static func sukuryū(
+        from location: (latitude: Coordinate, longitude: Coordinate), distanceKm: Double
+    ) -> (latitude: Coordinate, longitude: Coordinate) {
         print("\n=== RABBIT SCREW: SUKURYŪ ===")
         print(
             "Full power activated, Sunny now going all out… buckle up or huddle down, my Mugiwaras!"
@@ -255,10 +261,13 @@ struct RabbitScrew {
         print("The paddle wheels spin at maximum velocity!")
         print("VOOOOOOSSSHHHHH!")
 
-        // Move 5 degrees of latitude north (5 degrees * 111 km/degree = 555 km)
-        let newLocation = Coordinate.moveNorth(from: location, distanceKm: 555.0)
+        let distStr = String(format: "%.0f", distanceKm)
 
-        print("\nNew Position after Sukuryū Propulsion:")
+        print("The Sunny surges ahead by \(distStr) kilometer(s)!\n")
+
+        let newLocation = Coordinate.moveNorth(from: location, distanceKm: distanceKm)
+
+        print("New Position after Sukuryū Propulsion:")
         print("  Latitude:  \(newLocation.latitude.formatted(as: .latitude))")
         print("  Longitude: \(newLocation.longitude.formatted(as: .longitude))")
         print()
@@ -269,49 +278,17 @@ struct RabbitScrew {
 
 struct GaonCannon {
     /// Fire the Gaon Cannon
-    static func ガオン砲() {
+    static func ガオン砲(power: Int) {
         print("\n=== GAON CANNON ACTIVATED ===")
-
-        print("AIR BLAST FIRED!!")
+        print("Power level: \(power)")
+        for _ in 0..<max(1, power) {
+            print("AIR BLAST FIRED!!")
+        }
         print("TARGET SUCESSFULY OBLITERATED!!")
         print("\n⚠️  WARNING: Cola-Cannons depleted! Restock urgently!")
-
         print()
     }
 }
-
-// TEST: Get the user's real location and execute Coup De Burst
-print("\n=== THE THOUSAND SUNNY'S CURRENT COORDINATES ===\n")
-print("Fetching current location...")
-
-if let location = Coordinate.getUserLocation() {
-    print("Initial Position:")
-    print("  Latitude:  \(location.latitude.formatted(as: .latitude))")
-    print("  Longitude: \(location.longitude.formatted(as: .longitude))")
-
-    // Activate Coup De Burst
-    let newLocation = CoupDeBurst.execute(from: location)
-
-    print("New Position (after Coup De Burst):")
-    print("  Latitude:  \(newLocation.latitude.formatted(as: .latitude))")
-    print("  Longitude: \(newLocation.longitude.formatted(as: .longitude))")
-
-    // Activate Chicken Voyage
-    let retreatLocation = ChickenVoyage.execute(from: newLocation)
-
-    print("Final Position (after Chicken Voyage):")
-    print("  Latitude:  \(retreatLocation.latitude.formatted(as: .latitude))")
-    print("  Longitude: \(retreatLocation.longitude.formatted(as: .longitude))")
-
-    // Activate Rabbit Screw Sukuryū
-    _ = RabbitScrew.sukuryū(from: retreatLocation)
-} else {
-    print("Unable to determine current coordinates.")
-}
-
-// TEST: Fire the Gaon Cannon
-print("\n=== WEAPONS TEST ===\n")
-GaonCannon.ガオン砲()
 
 // Create an enum for the Soldier Dock System
 enum SoldierDock: Int {
@@ -458,64 +435,133 @@ struct FlowerBed {
     }
 }
 
-// TEST: Display info for each dock
-print("=== THOUSAND SUNNY SOLDIER DOCK SYSTEM ===\n")
+// App entry point (no args)
+func printUsage() {
+    print("Usage: sunny <system> <number>")
+    print("Systems:")
+    print("  coupe <km>      - COUP DE BURST: move north by <km> km")
+    print("  chicken <km>    - CHICKEN VOYAGE: move south by <km> km")
+    print("  rabbit <km>     - RABBIT SCREW: move north by <km> km")
+    print("  cannon <power>  - GAON CANNON: fire with power level")
+    print("  dock <1-6>      - SOLDIER DOCK SYSTEM: describe + launch vehicle")
+    print("  garden <1-14>   - USOPP'S GARDEN: show Pop Green info")
+    print("  mikan <n>       - NAMI’S GARDEN: access warning (number ignored)")
+    print("  fluer <n>       - ROBIN’S FLOWERS: access warning (number ignored)")
+}
 
-let dock1 = SoldierDock.shiroMokuba
-dock1.displayInfo(for: .shiroMokuba)
-print()
+// App entry point (with args)
+let args = CommandLine.arguments
+if args.count == 1 {
+    print("\n=== THE THOUSAND SUNNY'S CURRENT COORDINATES ===\n")
+    print("Fetching current location...")
+    if let loc = Coordinate.getUserLocation() {
+        print("  Latitude:  \(loc.latitude.formatted(as: .latitude))")
+        print("  Longitude: \(loc.longitude.formatted(as: .longitude))")
+    } else {
+        print("Unable to determine current coordinates.")
+    }
+    print("\nTip: run with arguments, e.g.\n  sunny coupe 2\n  sunny dock 3\n")
+    printUsage()
+} else {
+    let cmd = args[1].lowercased()
+    if args.count < 3 {
+        print("Missing number argument.\n")
+        printUsage()
 
-let dock2 = SoldierDock.miniMerry
-dock2.displayInfo(for: .miniMerry)
-print()
+        exit(1)
+    }
+    let numberStr = args[2]
+    let numberDouble = Double(numberStr)
+    let numberInt = Int(numberStr)
 
-let dock3 = SoldierDock.sharkSubmerge
-dock3.displayInfo(for: .sharkSubmerge)
-print()
+    switch cmd {
+    case "coupe":
+        guard let km = numberDouble, km >= 0 else {
+            print("Invalid km: \(numberStr)")
 
-let dock4 = SoldierDock.kruosaiIV
-dock4.displayInfo(for: .kruosaiIV)
-print()
+            exit(1)
+        }
+        if let start = Coordinate.getUserLocation() {
+            print("Initial Position:")
+            print("  Latitude:  \(start.latitude.formatted(as: .latitude))")
+            print("  Longitude: \(start.longitude.formatted(as: .longitude))")
 
-let dock5 = SoldierDock.brachioTankV
-dock5.displayInfo(for: .brachioTankV)
-print()
+            let end = CoupDeBurst.execute(from: start, distanceKm: km)
 
-let dock6 = SoldierDock.inflatablePool
-dock6.displayInfo(for: .inflatablePool)
-print()
+            print("New Position:")
+            print("  Latitude:  \(end.latitude.formatted(as: .latitude))")
+            print("  Longitude: \(end.longitude.formatted(as: .longitude))")
+        } else {
+            print("Unable to determine current coordinates.")
+        }
 
-// TEST: Launch vehicles from Soldier Dock
-print("\n=== LAUNCHING VEHICLES ===\n")
+    case "chicken":
+        guard let km = numberDouble, km >= 0 else {
+            print("Invalid km: \(numberStr)")
 
-dock3.launch()
-print()
+            exit(1)
+        }
+        if let start = Coordinate.getUserLocation() {
+            print("Initial Position:")
+            print("  Latitude:  \(start.latitude.formatted(as: .latitude))")
+            print("  Longitude: \(start.longitude.formatted(as: .longitude))")
 
-dock5.launch()
-print()
+            let end = ChickenVoyage.execute(from: start, distanceKm: km)
 
-// TEST: Display Pop Green info from Usopp's Garden
-print("\n=== USOPP'S GARDEN - POP GREEN INVENTORY ===\n")
+            print("New Position:")
+            print("  Latitude:  \(end.latitude.formatted(as: .latitude))")
+            print("  Longitude: \(end.longitude.formatted(as: .longitude))")
+        } else {
+            print("Unable to determine current coordinates.")
+        }
 
-let popGreen1 = Garden.rafflesia
-popGreen1.displayInfo(for: .rafflesia)
-print()
+    case "rabbit":
+        guard let km = numberDouble, km >= 0 else {
+            print("Invalid km: \(numberStr)")
 
-let popGreen2 = Garden.impact_Wolf
-popGreen2.displayInfo(for: .impact_Wolf)
-print()
+            exit(1)
+        }
+        if let start = Coordinate.getUserLocation() {
+            let _ = RabbitScrew.sukuryū(from: start, distanceKm: km)
+        } else {
+            print("Unable to determine current coordinates.")
+        }
 
-let popGreen3 = Garden.trampolia
-popGreen3.displayInfo(for: .trampolia)
-print()
+    case "cannon":
+        guard let power = numberInt, power >= 0 else {
+            print("Invalid power: \(numberStr)")
 
-// TEST: Try to access protected gardens
-print("\n=== RESTRICTED AREAS ===\n")
+            exit(1)
+        }
+        GaonCannon.ガオン砲(power: power)
 
-print("Attempting to pick mikans...")
-print(MikanGrove.access())
-print()
+    case "dock":
+        guard let idx = numberInt, let dock = SoldierDock(rawValue: idx) else {
+            print("Invalid dock number: \(numberStr). Use 1-6.")
 
-print("Attempting to visit flower bed...")
-print(FlowerBed.access())
-print()
+            exit(1)
+        }
+        dock.displayInfo(for: dock)
+        dock.launch()
+
+    case "garden":
+        guard let idx = numberInt, let pg = Garden(rawValue: idx) else {
+            print("Invalid Pop Green number: \(numberStr). Use 1-14.")
+
+            exit(1)
+        }
+        pg.displayInfo(for: pg)
+
+    case "mikan":
+        print(MikanGrove.access())
+
+    case "fluer":
+        print(FlowerBed.access())
+
+    default:
+        print("Unknown system: \(cmd)\n")
+        printUsage()
+
+        exit(1)
+    }
+}
