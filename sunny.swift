@@ -9,7 +9,8 @@ Copyright: 2025 Technomancer Pirate Captain
 import CoreLocation
 import Foundation
 
-/// Represent the axis of a coordinate (latitude or longitude)
+/// Create an enum to represent the axis of a coordinate
+/// (latitude or longitude)
 enum Axis { case latitude, longitude }
 
 // Create a struct to represent The Sunny's coordinates
@@ -20,7 +21,7 @@ struct Coordinate {
     let isNegative: Bool
 
     /// Format coordinates with hemisphere (N/S/E/W)
-    func formatted(as axis: Axis) -> String {
+    func hemiFormat(as axis: Axis) -> String {
         let hemi: String
         switch axis {
         case .latitude: hemi = isNegative ? "S" : "N"
@@ -46,7 +47,7 @@ struct Coordinate {
         return locator.fetchCurrentLocation()
     }
 
-    /// Convert decimal degrees to (Degrees, Minutes, Seconds)
+    /// Convert decimal degrees back to DMS
     static func fromDecimalDegrees(_ decimal: Double) -> Coordinate {
         let negative = decimal < 0
         let absolute = abs(decimal)
@@ -59,7 +60,7 @@ struct Coordinate {
             degrees: degrees, minutes: minutes, seconds: seconds, isNegative: negative)
     }
 
-    /// Move location north by specified distance in kilometers
+    /// Move north by specified distance in km
     static func moveNorth(
         from location: (latitude: Coordinate, longitude: Coordinate), distanceKm: Double
     ) -> (latitude: Coordinate, longitude: Coordinate) {
@@ -67,33 +68,32 @@ struct Coordinate {
         let currentLat = location.latitude.toDecimalDegrees()
         let currentLon = location.longitude.toDecimalDegrees()
 
-        // Calculate new latitude
-        // 1 degree of latitude ≈ 111 km
+        /// Calc new latitude
+        /// 1 degree of latitude ≈ 111 km
         let latitudeChange = distanceKm / 111.0
         let newLat = currentLat + latitudeChange
 
-        // Longitude stays the same when moving straight north
+        /// Longitude stays the same when moving straight north
         let newLatCoord = Coordinate.fromDecimalDegrees(newLat)
         let newLonCoord = Coordinate.fromDecimalDegrees(currentLon)
 
         return (latitude: newLatCoord, longitude: newLonCoord)
     }
 
-    /// Move location south by specified distance in kilometers
-    /// Returns new (latitude, longitude) coordinates
+    /// Move location south by specified distance in km
     static func moveSouth(
         from location: (latitude: Coordinate, longitude: Coordinate), distanceKm: Double
     ) -> (latitude: Coordinate, longitude: Coordinate) {
-        // Convert current coordinates to decimal degrees
+        /// Convert current coordinates to decimal degrees
         let currentLat = location.latitude.toDecimalDegrees()
         let currentLon = location.longitude.toDecimalDegrees()
 
-        // Calculate new latitude
-        // 1 degree of latitude ≈ 111 km
+        /// Calc new latitude
+        /// 1 degree of latitude ≈ 111 km
         let latitudeChange = distanceKm / 111.0
         let newLat = currentLat - latitudeChange
 
-        // Longitude stays the same when moving straight south
+        /// Longitude stays the same when moving straight south
         let newLatCoord = Coordinate.fromDecimalDegrees(newLat)
         let newLonCoord = Coordinate.fromDecimalDegrees(currentLon)
 
@@ -101,7 +101,7 @@ struct Coordinate {
     }
 }
 
-// Create a class to fetch location using CoreLocation
+/// Create a class to fetch location using CoreLocation
 class LocationFetcher: NSObject, CLLocationManagerDelegate {
     private let locationManager = CLLocationManager()
     private var currentLocation: CLLocation?
@@ -117,12 +117,12 @@ class LocationFetcher: NSObject, CLLocationManagerDelegate {
     override init() {
         super.init()
         locationManager.delegate = self
-        // For accuracy on Mac (Wi‑Fi based positioning)
+        /// For accuracy on Mac (Wi‑Fi based positioning)
         locationManager.desiredAccuracy = kCLLocationAccuracyNearestTenMeters
     }
 
     func fetchCurrentLocation() -> (latitude: Coordinate, longitude: Coordinate)? {
-        // Ensure Location Services are enabled globally
+        /// Ensure Location Services are enabled globally
         guard CLLocationManager.locationServicesEnabled() else {
             print(
                 "ERROR: Location Services may be disabled: \n System Settings > Privacy & Security > Location Services."
@@ -131,7 +131,7 @@ class LocationFetcher: NSObject, CLLocationManagerDelegate {
             return nil
         }
 
-        // Request location auth (if needed wait briefly for response)
+        /// Request location auth (if needed wait briefly for response)
         if locationManager.authorizationStatus == .notDetermined {
             #if os(macOS)
                 locationManager.requestAlwaysAuthorization()
@@ -144,7 +144,7 @@ class LocationFetcher: NSObject, CLLocationManagerDelegate {
             }
         }
 
-        // If denied or restricted, surface a helpful message
+        /// Show help message if denied or restricted
         switch locationManager.authorizationStatus {
         case .denied, .restricted:
             print(
@@ -155,10 +155,10 @@ class LocationFetcher: NSObject, CLLocationManagerDelegate {
             break
         }
 
-        // Start location updates (more reliable for CLI apps)
+        /// Start location updates (more reliable for CLI apps)
         locationManager.startUpdatingLocation()
 
-        // Pump run loop so that CoreLocation can deliver delegate callbacks.
+        /// Pump run loop so CoreLocation can deliver delegate callbacks.
         let timeoutDate = Date().addingTimeInterval(12)
         while currentLocation == nil && Date() < timeoutDate {
             RunLoop.current.run(mode: .default, before: Date().addingTimeInterval(0.1))
@@ -171,17 +171,17 @@ class LocationFetcher: NSObject, CLLocationManagerDelegate {
             return nil
         }
 
-        // Stop updates once a fix is obtained
+        /// Stop updates once a fix is obtained
         locationManager.stopUpdatingLocation()
 
-        // Convert to Coordinate format
+        /// Convert to Coordinate format
         let latCoord = Coordinate.fromDecimalDegrees(location.coordinate.latitude)
         let lonCoord = Coordinate.fromDecimalDegrees(location.coordinate.longitude)
 
         return (latitude: latCoord, longitude: lonCoord)
     }
 
-    // CLLocationManagerDelegate methods
+    /// CLLocationManagerDelegate methods
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
         if let location = locations.first {
             currentLocation = location
@@ -195,7 +195,7 @@ class LocationFetcher: NSObject, CLLocationManagerDelegate {
         )
     }
 
-    func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
+    func locationManagerAuthChanged(_ manager: CLLocationManager) {
         switch manager.authorizationStatus {
         case .notDetermined:
             #if os(macOS)
@@ -204,7 +204,7 @@ class LocationFetcher: NSObject, CLLocationManagerDelegate {
                 manager.requestWhenInUseAuthorization()
             #endif
         case .authorizedAlways, .authorizedWhenInUse:
-            // If auth was granted after our initial request, start updates
+            /// If auth was granted after our initial request, start updates
             manager.startUpdatingLocation()
         case .denied, .restricted:
             print("Location access denied. Please enable location services in System Settings.")
@@ -232,7 +232,7 @@ struct CoupDeBurst {
 }
 
 struct ChickenVoyage {
-    /// Execute the Chicken Voyage maneuver
+    /// Execute the Chicken Voyage escape
     static func execute(
         from location: (latitude: Coordinate, longitude: Coordinate), distanceKm: Double
     ) -> (latitude: Coordinate, longitude: Coordinate) {
@@ -250,7 +250,7 @@ struct ChickenVoyage {
 }
 
 struct RabbitScrew {
-    /// Propel the ship north at max speed, distance in kilometers
+    /// Execute the Rabbit Screw
     static func sukuryū(
         from location: (latitude: Coordinate, longitude: Coordinate), distanceKm: Double
     ) -> (latitude: Coordinate, longitude: Coordinate) {
@@ -268,8 +268,8 @@ struct RabbitScrew {
         let newLocation = Coordinate.moveNorth(from: location, distanceKm: distanceKm)
 
         print("New Position after Sukuryū Propulsion:")
-        print("  Latitude:  \(newLocation.latitude.formatted(as: .latitude))")
-        print("  Longitude: \(newLocation.longitude.formatted(as: .longitude))")
+        print("  Latitude:  \(newLocation.latitude.hemiFormat(as: .latitude))")
+        print("  Longitude: \(newLocation.longitude.hemiFormat(as: .longitude))")
         print()
 
         return newLocation
@@ -281,18 +281,19 @@ struct GaonCannon {
     static func ガオン砲(power: Int) {
         print("\n=== GAON CANNON ACTIVATED ===")
         print("Power level: \(power)")
+
         for _ in 0..<max(1, power) {
             print("AIR BLAST FIRED!!")
         }
+
         print("TARGET SUCESSFULY OBLITERATED!!")
         print("\n⚠️  WARNING: Cola-Cannons depleted! Restock urgently!")
         print()
     }
 }
 
-// Create an enum for the Soldier Dock System
 enum SoldierDock: Int {
-    // Dock contents
+    /// Contents of the Soldier Dock System
     case shiroMokuba = 1
     case miniMerry
     case sharkSubmerge
@@ -300,7 +301,7 @@ enum SoldierDock: Int {
     case brachioTankV
     case inflatablePool
 
-    // Show info about a specific dock channels
+    /// Output info about specific dock channels
     func displayInfo(for dock: SoldierDock) {
         switch dock {
         case .shiroMokuba:
@@ -330,7 +331,7 @@ enum SoldierDock: Int {
         }
     }
 
-    // Launch a vehicle from the dock
+    /// Launch a vehicle from the dock
     func launch() {
         switch self {
         case .shiroMokuba:
@@ -356,6 +357,7 @@ enum SoldierDock: Int {
 }
 
 enum Garden: Int {
+    /// The contents of the Usopp's Pop Greens Garden
     case sprinkler = 1
     case platanus_Shuriken
     case exploding_Pinecones
@@ -371,7 +373,7 @@ enum Garden: Int {
     case boaty_Banana_Fan_Grass
     case sargasso
 
-    // Output Pop Green info
+    /// Output Pop Green info
     func displayInfo(for popGreen: Garden) {
         switch popGreen {
         case .sprinkler:
@@ -454,22 +456,26 @@ let args = CommandLine.arguments
 if args.count == 1 {
     print("\n=== THE THOUSAND SUNNY'S CURRENT COORDINATES ===\n")
     print("Fetching current location...")
+
     if let loc = Coordinate.getUserLocation() {
-        print("  Latitude:  \(loc.latitude.formatted(as: .latitude))")
-        print("  Longitude: \(loc.longitude.formatted(as: .longitude))")
+        print("  Latitude:  \(loc.latitude.hemiFormat(as: .latitude))")
+        print("  Longitude: \(loc.longitude.hemiFormat(as: .longitude))")
     } else {
         print("Unable to determine current coordinates.")
     }
+
     print("\nTip: run with arguments, e.g.\n  sunny coupe 2\n  sunny dock 3\n")
     printUsage()
 } else {
     let cmd = args[1].lowercased()
+
     if args.count < 3 {
         print("Missing number argument.\n")
         printUsage()
 
         exit(1)
     }
+
     let numberStr = args[2]
     let numberDouble = Double(numberStr)
     let numberInt = Int(numberStr)
@@ -483,14 +489,14 @@ if args.count == 1 {
         }
         if let start = Coordinate.getUserLocation() {
             print("Initial Position:")
-            print("  Latitude:  \(start.latitude.formatted(as: .latitude))")
-            print("  Longitude: \(start.longitude.formatted(as: .longitude))")
+            print("  Latitude:  \(start.latitude.hemiFormat(as: .latitude))")
+            print("  Longitude: \(start.longitude.hemiFormat(as: .longitude))")
 
             let end = CoupDeBurst.execute(from: start, distanceKm: km)
 
             print("New Position:")
-            print("  Latitude:  \(end.latitude.formatted(as: .latitude))")
-            print("  Longitude: \(end.longitude.formatted(as: .longitude))")
+            print("  Latitude:  \(end.latitude.hemiFormat(as: .latitude))")
+            print("  Longitude: \(end.longitude.hemiFormat(as: .longitude))")
         } else {
             print("Unable to determine current coordinates.")
         }
@@ -503,14 +509,14 @@ if args.count == 1 {
         }
         if let start = Coordinate.getUserLocation() {
             print("Initial Position:")
-            print("  Latitude:  \(start.latitude.formatted(as: .latitude))")
-            print("  Longitude: \(start.longitude.formatted(as: .longitude))")
+            print("  Latitude:  \(start.latitude.hemiFormat(as: .latitude))")
+            print("  Longitude: \(start.longitude.hemiFormat(as: .longitude))")
 
             let end = ChickenVoyage.execute(from: start, distanceKm: km)
 
             print("New Position:")
-            print("  Latitude:  \(end.latitude.formatted(as: .latitude))")
-            print("  Longitude: \(end.longitude.formatted(as: .longitude))")
+            print("  Latitude:  \(end.latitude.hemiFormat(as: .latitude))")
+            print("  Longitude: \(end.longitude.hemiFormat(as: .longitude))")
         } else {
             print("Unable to determine current coordinates.")
         }
