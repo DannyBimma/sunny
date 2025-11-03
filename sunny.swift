@@ -9,23 +9,34 @@ Copyright: 2025 Technomancer Pirate Captain
 import CoreLocation
 import Foundation
 
+/// Represent the axis of a coordinate (latitude or longitude)
+enum Axis { case latitude, longitude }
+
 // Create a struct to represent The Sunny's coordinates
 struct Coordinate {
     let degrees: Int
     let minutes: Int
     let seconds: Int
+    let isNegative: Bool
 
-    /// Format the coordinate as a string
-    func formatted() -> String {
-        return "\(degrees)° \(minutes)'\(seconds)\""
+    /// Format coordinates with hemisphere (N/S/E/W)
+    func formatted(as axis: Axis) -> String {
+        let hemi: String
+        switch axis {
+        case .latitude: hemi = isNegative ? "S" : "N"
+        case .longitude: hemi = isNegative ? "W" : "E"
+        }
+
+        return "\(degrees)° \(minutes)'\(seconds)\" \(hemi)"
     }
 
     /// Convert (Degrees, Minutes, Seconds) back to decimal degrees
     func toDecimalDegrees() -> Double {
         let decimalMinutes = Double(minutes) / 60.0
         let decimalSeconds = Double(seconds) / 3600.0
+        let magnitude = Double(degrees) + decimalMinutes + decimalSeconds
 
-        return Double(degrees) + decimalMinutes + decimalSeconds
+        return isNegative ? -magnitude : magnitude
     }
 
     /// Get user's real location coordinates
@@ -37,13 +48,15 @@ struct Coordinate {
 
     /// Convert decimal degrees to (Degrees, Minutes, Seconds)
     static func fromDecimalDegrees(_ decimal: Double) -> Coordinate {
+        let negative = decimal < 0
         let absolute = abs(decimal)
         let degrees = Int(absolute)
         let minutesDecimal = (absolute - Double(degrees)) * 60
         let minutes = Int(minutesDecimal)
         let seconds = Int((minutesDecimal - Double(minutes)) * 60)
 
-        return Coordinate(degrees: degrees, minutes: minutes, seconds: seconds)
+        return Coordinate(
+            degrees: degrees, minutes: minutes, seconds: seconds, isNegative: negative)
     }
 
     /// Move location north by specified distance in kilometers
@@ -246,8 +259,8 @@ struct RabbitScrew {
         let newLocation = Coordinate.moveNorth(from: location, distanceKm: 555.0)
 
         print("\nNew Position after Sukuryū Propulsion:")
-        print("  Latitude:  \(newLocation.latitude.formatted())")
-        print("  Longitude: \(newLocation.longitude.formatted())")
+        print("  Latitude:  \(newLocation.latitude.formatted(as: .latitude))")
+        print("  Longitude: \(newLocation.longitude.formatted(as: .longitude))")
         print()
 
         return newLocation
@@ -273,22 +286,22 @@ print("Fetching current location...")
 
 if let location = Coordinate.getUserLocation() {
     print("Initial Position:")
-    print("  Latitude:  \(location.latitude.formatted())")
-    print("  Longitude: \(location.longitude.formatted())")
+    print("  Latitude:  \(location.latitude.formatted(as: .latitude))")
+    print("  Longitude: \(location.longitude.formatted(as: .longitude))")
 
     // Activate Coup De Burst
     let newLocation = CoupDeBurst.execute(from: location)
 
     print("New Position (after Coup De Burst):")
-    print("  Latitude:  \(newLocation.latitude.formatted())")
-    print("  Longitude: \(newLocation.longitude.formatted())")
+    print("  Latitude:  \(newLocation.latitude.formatted(as: .latitude))")
+    print("  Longitude: \(newLocation.longitude.formatted(as: .longitude))")
 
     // Activate Chicken Voyage
     let retreatLocation = ChickenVoyage.execute(from: newLocation)
 
     print("Final Position (after Chicken Voyage):")
-    print("  Latitude:  \(retreatLocation.latitude.formatted())")
-    print("  Longitude: \(retreatLocation.longitude.formatted())")
+    print("  Latitude:  \(retreatLocation.latitude.formatted(as: .latitude))")
+    print("  Longitude: \(retreatLocation.longitude.formatted(as: .longitude))")
 
     // Activate Rabbit Screw Sukuryū
     _ = RabbitScrew.sukuryū(from: retreatLocation)
