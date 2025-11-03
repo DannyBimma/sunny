@@ -16,6 +16,10 @@
     <string>1.0</string>
     <key>NSLocationWhenInUseUsageDescription</key>
     <string>This app needs your location to display The Sunny's coordinates.</string>
+    <key>NSLocationUsageDescription</key>
+    <string>The Sunny needs your location to plot its course.</string>
+    <key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+    <string>This app simulates navigation and needs location access even without a visible window.</string>
     <key>LSBackgroundOnly</key>
     <false/>
 </dict>

@@ -92,31 +92,74 @@ struct Coordinate {
 class LocationFetcher: NSObject, CLLocationManagerDelegate {
     private let locationManager = CLLocationManager()
     private var currentLocation: CLLocation?
-    private let semaphore = DispatchSemaphore(value: 0)
+    private var isAuthorized: Bool {
+        switch locationManager.authorizationStatus {
+        case .authorizedAlways, .authorizedWhenInUse:
+            return true
+        default:
+            return false
+        }
+    }
 
     override init() {
         super.init()
         locationManager.delegate = self
-        locationManager.desiredAccuracy = kCLLocationAccuracyBest
+        // For accuracy on Mac (Wi‑Fi based positioning)
+        locationManager.desiredAccuracy = kCLLocationAccuracyNearestTenMeters
     }
 
     func fetchCurrentLocation() -> (latitude: Coordinate, longitude: Coordinate)? {
-        // Request location authorisation
-        locationManager.requestWhenInUseAuthorization()
+        // Ensure Location Services are enabled globally
+        guard CLLocationManager.locationServicesEnabled() else {
+            print(
+                "ERROR: Location Services may be disabled: \n System Settings > Privacy & Security > Location Services."
+            )
 
-        // Request a single location update
-        locationManager.requestLocation()
+            return nil
+        }
 
-        // Wait for location (with timeout)
-        let timeout = DispatchTime.now() + .seconds(10)
-        let result = semaphore.wait(timeout: timeout)
+        // Request location auth (if needed wait briefly for response)
+        if locationManager.authorizationStatus == .notDetermined {
+            #if os(macOS)
+                locationManager.requestAlwaysAuthorization()
+            #else
+                locationManager.requestWhenInUseAuthorization()
+            #endif
+            let authDeadline = Date().addingTimeInterval(8)
+            while locationManager.authorizationStatus == .notDetermined && Date() < authDeadline {
+                RunLoop.current.run(mode: .default, before: Date().addingTimeInterval(0.1))
+            }
+        }
 
-        guard result == .success, let location = currentLocation else {
+        // If denied or restricted, surface a helpful message
+        switch locationManager.authorizationStatus {
+        case .denied, .restricted:
+            print(
+                "Location access denied/restricted. Enable it for 'sunny' in System Settings > Privacy & Security > Location Services."
+            )
+            return nil
+        default:
+            break
+        }
+
+        // Start location updates (more reliable for CLI apps)
+        locationManager.startUpdatingLocation()
+
+        // Pump run loop so that CoreLocation can deliver delegate callbacks.
+        let timeoutDate = Date().addingTimeInterval(12)
+        while currentLocation == nil && Date() < timeoutDate {
+            RunLoop.current.run(mode: .default, before: Date().addingTimeInterval(0.1))
+        }
+
+        guard let location = currentLocation else {
             print(
                 "Coordinates are unknown and mysterious. Make sure location services are enabled.")
 
             return nil
         }
+
+        // Stop updates once a fix is obtained
+        locationManager.stopUpdatingLocation()
 
         // Convert to Coordinate format
         let latCoord = Coordinate.fromDecimalDegrees(location.coordinate.latitude)
@@ -129,23 +172,30 @@ class LocationFetcher: NSObject, CLLocationManagerDelegate {
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
         if let location = locations.first {
             currentLocation = location
-            semaphore.signal()
         }
     }
 
     func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
-        print("Location error: \(error.localizedDescription)")
-        semaphore.signal()
+        let nsError = error as NSError
+        print(
+            "Location error: domain=\(nsError.domain) code=\(nsError.code) desc=\(nsError.localizedDescription)"
+        )
     }
 
     func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
         switch manager.authorizationStatus {
         case .notDetermined:
-            manager.requestWhenInUseAuthorization()
+            #if os(macOS)
+                manager.requestAlwaysAuthorization()
+            #else
+                manager.requestWhenInUseAuthorization()
+            #endif
+        case .authorizedAlways, .authorizedWhenInUse:
+            // If auth was granted after our initial request, start updates
+            manager.startUpdatingLocation()
         case .denied, .restricted:
-            print("Location access denied. Please enable location services in System Preferences.")
-            semaphore.signal()
-        default:
+            print("Location access denied. Please enable location services in System Settings.")
+        @unknown default:
             break
         }
     }
