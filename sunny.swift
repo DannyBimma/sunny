@@ -9,11 +9,166 @@ Copyright: 2025 Technomancer Pirate Captain
 import CoreLocation
 import Foundation
 
-/// Create an enum to represent the axis of a coordinate
-/// (latitude or longitude)
-enum Axis { case latitude, longitude }
+/// Main entry point
+func main() {
+    let args = CommandLine.arguments
 
-// Create a struct to represent The Sunny's coordinates
+    if args.count == 1 {
+        displayCurrentLocation()
+    } else {
+        handleArgs(args)
+    }
+}
+
+/// Display current location & usage if no args provided
+private func displayCurrentLocation() {
+    print("\n=== THE THOUSAND SUNNY'S CURRENT COORDINATES ===\n")
+    print("Fetching current location...")
+
+    if let location = Coordinate.getUserLocation() {
+        printLocation(location)
+    } else {
+        print("⚠️Unable to determine current coordinates⚠️")
+    }
+
+    print("\nTip: run with arguments, e.g.\n  sunny coupe 2\n  sunny dock 3\n")
+    printUsage()
+}
+
+/// Handle command-line arguments
+private func handleArgs(_ args: [String]) {
+    let command = args[1].lowercased()
+
+    guard args.count >= 3 else {
+        print("Missing number argument.\n")
+        printUsage()
+
+        exit(1)
+    }
+
+    let numberStr = args[2]
+
+    switch command {
+    case "coupe":
+        executeNavigationCommand(
+            numberStr: numberStr,
+            execute: CoupDeBurst.execute,
+            showInitialPosition: true
+        )
+
+    case "chicken":
+        executeNavigationCommand(
+            numberStr: numberStr,
+            execute: ChickenVoyage.execute,
+            showInitialPosition: true
+        )
+
+    case "rabbit":
+        executeNavigationCommand(
+            numberStr: numberStr,
+            execute: RabbitScrew.sukuryū,
+            showInitialPosition: false
+        )
+
+    case "cannon":
+        guard let power = Int(numberStr), power >= 0 else {
+            print("Invalid power level: \(numberStr)")
+            exit(1)
+        }
+        GaonCannon.ガオン砲(power: power)
+
+    case "dock":
+        guard let idx = Int(numberStr), let dock = SoldierDock(rawValue: idx) else {
+            print("Invalid dock channel: \(numberStr). Use 1-6.")
+            exit(1)
+        }
+        dock.displayInfo()
+        dock.launch()
+
+    case "garden":
+        guard let idx = Int(numberStr), let popGreen = Garden(rawValue: idx) else {
+            print("Invalid Pop Green selection: \(numberStr). Use 1-14.")
+            exit(1)
+        }
+        popGreen.displayInfo()
+
+    case "mikan":
+        print(MikanGrove.access())
+
+    case "fluer":
+        print(FlowerBed.access())
+
+    default:
+        print("Unknown system: \(command)\n")
+        printUsage()
+        exit(1)
+    }
+}
+
+// HELPER FUNCTIONS
+
+/// Print usage instructions
+private func printUsage() {
+    print("Usage: sunny <system> <number>")
+    print("Systems:")
+    print("  coupe <km>      - COUP DE BURST: move north by <km> km")
+    print("  chicken <km>    - CHICKEN VOYAGE: move south by <km> km")
+    print("  rabbit <km>     - RABBIT SCREW: move north by <km> km")
+    print("  cannon <power>  - GAON CANNON: fire with power level")
+    print("  dock <1-6>      - SOLDIER DOCK SYSTEM: describe + launch vehicle")
+    print("  garden <1-14>   - USOPP'S GARDEN: show Pop Green info")
+    print("  mikan <n>       - NAMI'S GARDEN: access warning (number ignored)")
+    print("  fluer <n>       - ROBIN'S FLOWERS: access warning (number ignored)")
+}
+
+/// Print location coordinates in (N/S/E/W) formatted style
+private func printLocation(_ location: (latitude: Coordinate, longitude: Coordinate)) {
+    print("  Latitude:  \(location.latitude.hemiFormat(as: .latitude))")
+    print("  Longitude: \(location.longitude.hemiFormat(as: .longitude))")
+}
+
+/// Execute a movement command with common error handling and display logic
+private func executeNavigationCommand(
+    numberStr: String,
+    execute: ((latitude: Coordinate, longitude: Coordinate), Double) -> (
+        latitude: Coordinate, longitude: Coordinate
+    ),
+    showInitialPosition: Bool
+) {
+    guard let distance = Double(numberStr), distance >= 0 else {
+        print("⚠️Invalid distance: \(numberStr)⚠️")
+
+        exit(1)
+    }
+
+    guard let startLocation = Coordinate.getUserLocation() else {
+        print("⚠️Unable to determine current coordinates⚠️")
+
+        return
+    }
+
+    if showInitialPosition {
+        print("Initial Position:")
+        printLocation(startLocation)
+    }
+
+    let endLocation = execute(startLocation, distance)
+
+    if showInitialPosition {
+        print("New Position:")
+        printLocation(endLocation)
+    }
+}
+
+// DATA TYPES
+
+/// Represent the axis of a coordinate (latitude or longitude)
+enum Axis {
+    case latitude
+    case longitude
+}
+
+/// Represent a coordinate in DMS format
 struct Coordinate {
     let degrees: Int
     let minutes: Int
@@ -22,22 +177,41 @@ struct Coordinate {
 
     /// Format coordinates with hemisphere (N/S/E/W)
     func hemiFormat(as axis: Axis) -> String {
-        let hemi: String
+        let hemisphere: String
         switch axis {
-        case .latitude: hemi = isNegative ? "S" : "N"
-        case .longitude: hemi = isNegative ? "W" : "E"
+        case .latitude:
+            hemisphere = isNegative ? "S" : "N"
+        case .longitude:
+            hemisphere = isNegative ? "W" : "E"
         }
 
-        return "\(degrees)° \(minutes)'\(seconds)\" \(hemi)"
+        return "\(degrees)° \(minutes)'\(seconds)\" \(hemisphere)"
     }
 
-    /// Convert (Degrees, Minutes, Seconds) back to decimal degrees
+    /// Convert DMS to decimal degrees
     func toDecimalDegrees() -> Double {
         let decimalMinutes = Double(minutes) / 60.0
         let decimalSeconds = Double(seconds) / 3600.0
         let magnitude = Double(degrees) + decimalMinutes + decimalSeconds
 
         return isNegative ? -magnitude : magnitude
+    }
+
+    /// Convert decimal degrees to DMS format
+    static func fromDecimalDegrees(_ decimal: Double) -> Coordinate {
+        let isNegative = decimal < 0
+        let absolute = abs(decimal)
+        let degrees = Int(absolute)
+        let minutesDecimal = (absolute - Double(degrees)) * 60
+        let minutes = Int(minutesDecimal)
+        let seconds = Int((minutesDecimal - Double(minutes)) * 60)
+
+        return Coordinate(
+            degrees: degrees,
+            minutes: minutes,
+            seconds: seconds,
+            isNegative: isNegative
+        )
     }
 
     /// Get user's real location coordinates
@@ -47,64 +221,55 @@ struct Coordinate {
         return locator.fetchCurrentLocation()
     }
 
-    /// Convert decimal degrees back to DMS
-    static func fromDecimalDegrees(_ decimal: Double) -> Coordinate {
-        let negative = decimal < 0
-        let absolute = abs(decimal)
-        let degrees = Int(absolute)
-        let minutesDecimal = (absolute - Double(degrees)) * 60
-        let minutes = Int(minutesDecimal)
-        let seconds = Int((minutesDecimal - Double(minutes)) * 60)
+    /// Move location by specified distance in km along a cardinal direction
+    /// - Parameters:
+    ///   - location: Current location
+    ///   - distanceKm: Distance to move in km
+    ///   - direction: Direction multiplier (1 for north/east, -1 for south/west)
+    /// - Returns: New location after movement
+    private static func move(
+        from location: (latitude: Coordinate, longitude: Coordinate),
+        distanceKm: Double,
+        direction: Double
+    ) -> (latitude: Coordinate, longitude: Coordinate) {
+        let currentLat = location.latitude.toDecimalDegrees()
+        let currentLon = location.longitude.toDecimalDegrees()
 
-        return Coordinate(
-            degrees: degrees, minutes: minutes, seconds: seconds, isNegative: negative)
+        // Calc new latitude (1 degree of latitude ≈ 111 km)
+        let latitudeChange = distanceKm / 111.0
+        let newLat = currentLat + (latitudeChange * direction)
+
+        // Longitude stays the same when moving straight north/south
+        let newLatCoord = Coordinate.fromDecimalDegrees(newLat)
+        let newLonCoord = Coordinate.fromDecimalDegrees(currentLon)
+
+        return (latitude: newLatCoord, longitude: newLonCoord)
     }
 
     /// Move north by specified distance in km
     static func moveNorth(
-        from location: (latitude: Coordinate, longitude: Coordinate), distanceKm: Double
+        from location: (latitude: Coordinate, longitude: Coordinate),
+        distanceKm: Double
     ) -> (latitude: Coordinate, longitude: Coordinate) {
-        // Convert current coordinates to decimal degrees
-        let currentLat = location.latitude.toDecimalDegrees()
-        let currentLon = location.longitude.toDecimalDegrees()
-
-        /// Calc new latitude
-        /// 1 degree of latitude ≈ 111 km
-        let latitudeChange = distanceKm / 111.0
-        let newLat = currentLat + latitudeChange
-
-        /// Longitude stays the same when moving straight north
-        let newLatCoord = Coordinate.fromDecimalDegrees(newLat)
-        let newLonCoord = Coordinate.fromDecimalDegrees(currentLon)
-
-        return (latitude: newLatCoord, longitude: newLonCoord)
+        return move(from: location, distanceKm: distanceKm, direction: 1.0)
     }
 
-    /// Move location south by specified distance in km
+    /// Move south by specified distance in km
     static func moveSouth(
-        from location: (latitude: Coordinate, longitude: Coordinate), distanceKm: Double
+        from location: (latitude: Coordinate, longitude: Coordinate),
+        distanceKm: Double
     ) -> (latitude: Coordinate, longitude: Coordinate) {
-        /// Convert current coordinates to decimal degrees
-        let currentLat = location.latitude.toDecimalDegrees()
-        let currentLon = location.longitude.toDecimalDegrees()
-
-        /// Calc new latitude
-        /// 1 degree of latitude ≈ 111 km
-        let latitudeChange = distanceKm / 111.0
-        let newLat = currentLat - latitudeChange
-
-        /// Longitude stays the same when moving straight south
-        let newLatCoord = Coordinate.fromDecimalDegrees(newLat)
-        let newLonCoord = Coordinate.fromDecimalDegrees(currentLon)
-
-        return (latitude: newLatCoord, longitude: newLonCoord)
+        return move(from: location, distanceKm: distanceKm, direction: -1.0)
     }
 }
 
-/// Create a class to fetch location using CoreLocation
+// LOCATION SERVICES
+
+/// Class to fetch location using CoreLocation
 class LocationFetcher: NSObject, CLLocationManagerDelegate {
     private let locationManager = CLLocationManager()
     private var currentLocation: CLLocation?
+
     private var isAuthorized: Bool {
         switch locationManager.authorizationStatus {
         case .authorizedAlways, .authorizedWhenInUse:
@@ -117,52 +282,34 @@ class LocationFetcher: NSObject, CLLocationManagerDelegate {
     override init() {
         super.init()
         locationManager.delegate = self
-        /// For accuracy on Mac (Wi‑Fi based positioning)
+        // For accuracy on Mac (Wi-Fi based positioning)
         locationManager.desiredAccuracy = kCLLocationAccuracyNearestTenMeters
     }
 
     func fetchCurrentLocation() -> (latitude: Coordinate, longitude: Coordinate)? {
-        /// Ensure Location Services are enabled globally
+        // Ensure Location Services are enabled globally
         guard CLLocationManager.locationServicesEnabled() else {
             print(
-                "ERROR: Location Services may be disabled: \n System Settings > Privacy & Security > Location Services."
+                "⚠️ERROR: Location Services may be disabled: \n System Settings > Privacy & Security > Location Services.⚠️"
             )
-
             return nil
         }
 
-        /// Request location auth (if needed wait briefly for response)
+        // Request location auth if needed
         if locationManager.authorizationStatus == .notDetermined {
-            #if os(macOS)
-                locationManager.requestAlwaysAuthorization()
-            #else
-                locationManager.requestWhenInUseAuthorization()
-            #endif
-            let authDeadline = Date().addingTimeInterval(8)
-            while locationManager.authorizationStatus == .notDetermined && Date() < authDeadline {
-                RunLoop.current.run(mode: .default, before: Date().addingTimeInterval(0.1))
-            }
+            requestAuth()
+            waitForAuthorization()
         }
 
-        /// Show help message if denied or restricted
-        switch locationManager.authorizationStatus {
-        case .denied, .restricted:
-            print(
-                "Location access denied/restricted. Enable it for 'sunny' in System Settings > Privacy & Security > Location Services."
-            )
+        // Check auth status
+        guard checkAuthorizationStatus() else {
             return nil
-        default:
-            break
         }
 
-        /// Start location updates (more reliable for CLI apps)
+        // Start location updates (more reliable for CLI apps)
         locationManager.startUpdatingLocation()
 
-        /// Pump run loop so CoreLocation can deliver delegate callbacks.
-        let timeoutDate = Date().addingTimeInterval(12)
-        while currentLocation == nil && Date() < timeoutDate {
-            RunLoop.current.run(mode: .default, before: Date().addingTimeInterval(0.1))
-        }
+        waitForLocationFix()
 
         guard let location = currentLocation else {
             print(
@@ -171,17 +318,56 @@ class LocationFetcher: NSObject, CLLocationManagerDelegate {
             return nil
         }
 
-        /// Stop updates once a fix is obtained
+        // Stop updates once a fix is obtained
         locationManager.stopUpdatingLocation()
 
-        /// Convert to Coordinate format
+        // Convert to Coordinate format
         let latCoord = Coordinate.fromDecimalDegrees(location.coordinate.latitude)
         let lonCoord = Coordinate.fromDecimalDegrees(location.coordinate.longitude)
 
         return (latitude: latCoord, longitude: lonCoord)
     }
 
-    /// CLLocationManagerDelegate methods
+    /// Request location authorisation
+    private func requestAuth() {
+        #if os(macOS)
+            locationManager.requestAlwaysAuthorization()
+        #else
+            locationManager.requestWhenInUseAuthorization()
+        #endif
+    }
+
+    /// Await location authorisation
+    private func waitForAuthorization() {
+        let authDeadline = Date().addingTimeInterval(8)
+        while locationManager.authorizationStatus == .notDetermined && Date() < authDeadline {
+            RunLoop.current.run(mode: .default, before: Date().addingTimeInterval(0.1))
+        }
+    }
+
+    /// Check location authorisation status
+    private func checkAuthorizationStatus() -> Bool {
+        switch locationManager.authorizationStatus {
+        case .denied, .restricted:
+            print(
+                "Location access denied/restricted. Enable it for 'sunny' in System Settings > Privacy & Security > Location Services."
+            )
+            return false
+        default:
+            return true
+        }
+    }
+
+    /// Await location fix
+    private func waitForLocationFix() {
+        let timeoutDate = Date().addingTimeInterval(12)
+        while currentLocation == nil && Date() < timeoutDate {
+            RunLoop.current.run(mode: .default, before: Date().addingTimeInterval(0.1))
+        }
+    }
+
+    // CORE LOCATION MANAGER DELEGATE
+
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
         if let location = locations.first {
             currentLocation = location
@@ -191,33 +377,32 @@ class LocationFetcher: NSObject, CLLocationManagerDelegate {
     func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
         let nsError = error as NSError
         print(
-            "Location error: domain=\(nsError.domain) code=\(nsError.code) desc=\(nsError.localizedDescription)"
+            "⚠️Location error: domain=\(nsError.domain) code=\(nsError.code) desc=\(nsError.localizedDescription)⚠️"
         )
     }
 
     func locationManagerAuthChanged(_ manager: CLLocationManager) {
         switch manager.authorizationStatus {
         case .notDetermined:
-            #if os(macOS)
-                manager.requestAlwaysAuthorization()
-            #else
-                manager.requestWhenInUseAuthorization()
-            #endif
+            requestAuth()
         case .authorizedAlways, .authorizedWhenInUse:
-            /// If auth was granted after our initial request, start updates
+            // If auth was granted after our initial request, start updates
             manager.startUpdatingLocation()
         case .denied, .restricted:
-            print("Location access denied. Please enable location services in System Settings.")
+            print("⚠️Location access denied. Please enable location services in System Settings.⚠️")
         @unknown default:
             break
         }
     }
 }
 
+// THE SHIP'S SYSTEMS
+
+/// Emergency escape maneuver
 struct CoupDeBurst {
-    /// Execute the Coup De Burst maneuver
     static func execute(
-        from location: (latitude: Coordinate, longitude: Coordinate), distanceKm: Double
+        from location: (latitude: Coordinate, longitude: Coordinate),
+        distanceKm: Double
     ) -> (latitude: Coordinate, longitude: Coordinate) {
         print("\n=== COUP DE BURST ACTIVATED ===")
         print("Releasing compressed air from stern...")
@@ -231,10 +416,11 @@ struct CoupDeBurst {
     }
 }
 
+/// Tactical retreat maneuver
 struct ChickenVoyage {
-    /// Execute the Chicken Voyage escape
     static func execute(
-        from location: (latitude: Coordinate, longitude: Coordinate), distanceKm: Double
+        from location: (latitude: Coordinate, longitude: Coordinate),
+        distanceKm: Double
     ) -> (latitude: Coordinate, longitude: Coordinate) {
         print("\n=== CHICKEN VOYAGE ACTIVATED ===")
         print("Tactical retreat engaged!")
@@ -249,10 +435,11 @@ struct ChickenVoyage {
     }
 }
 
+/// Maximum speed propulsion system
 struct RabbitScrew {
-    /// Execute the Rabbit Screw
     static func sukuryū(
-        from location: (latitude: Coordinate, longitude: Coordinate), distanceKm: Double
+        from location: (latitude: Coordinate, longitude: Coordinate),
+        distanceKm: Double
     ) -> (latitude: Coordinate, longitude: Coordinate) {
         print("\n=== RABBIT SCREW: SUKURYŪ ===")
         print(
@@ -268,16 +455,15 @@ struct RabbitScrew {
         let newLocation = Coordinate.moveNorth(from: location, distanceKm: distanceKm)
 
         print("New Position after Sukuryū Propulsion:")
-        print("  Latitude:  \(newLocation.latitude.hemiFormat(as: .latitude))")
-        print("  Longitude: \(newLocation.longitude.hemiFormat(as: .longitude))")
+        printLocation(newLocation)
         print()
 
         return newLocation
     }
 }
 
+/// Cola-powered air blast weapon system
 struct GaonCannon {
-    /// Fire the Gaon Cannon
     static func ガオン砲(power: Int) {
         print("\n=== GAON CANNON ACTIVATED ===")
         print("Power level: \(power)")
@@ -292,8 +478,8 @@ struct GaonCannon {
     }
 }
 
+/// Vehicle storage and deployment
 enum SoldierDock: Int {
-    /// Contents of the Soldier Dock System
     case shiroMokuba = 1
     case miniMerry
     case sharkSubmerge
@@ -301,9 +487,9 @@ enum SoldierDock: Int {
     case brachioTankV
     case inflatablePool
 
-    /// Output info about specific dock channels
-    func displayInfo(for dock: SoldierDock) {
-        switch dock {
+    /// Display information about dock channels
+    func displayInfo() {
+        switch self {
         case .shiroMokuba:
             print("Channel 1 - Shiro Mokuba:")
             print(
@@ -331,7 +517,7 @@ enum SoldierDock: Int {
         }
     }
 
-    /// Launch a vehicle from the dock
+    /// Launch the vehicle from this dock
     func launch() {
         switch self {
         case .shiroMokuba:
@@ -356,8 +542,8 @@ enum SoldierDock: Int {
     }
 }
 
+/// Usopp's Pop Green Garden (Plant-based weaponry
 enum Garden: Int {
-    /// The contents of the Usopp's Pop Greens Garden
     case sprinkler = 1
     case platanus_Shuriken
     case exploding_Pinecones
@@ -373,9 +559,9 @@ enum Garden: Int {
     case boaty_Banana_Fan_Grass
     case sargasso
 
-    /// Output Pop Green info
-    func displayInfo(for popGreen: Garden) {
-        switch popGreen {
+    /// Display information about this Pop Green
+    func displayInfo() {
+        switch self {
         case .sprinkler:
             print("#1 - Sprinkler:")
             print(
@@ -423,151 +609,22 @@ enum Garden: Int {
     }
 }
 
+// RESTRICTED AREAS
+
+/// Nami's Mikan Grove
 struct MikanGrove {
-    /// Attempt to access Nami's precious mikan trees
     static func access() -> String {
         return "UNAUTHORISED ACCESS WARNING!! CONTACTING NAMI!!"
     }
 }
 
+/// Robin's Flower Bed
 struct FlowerBed {
-    /// Attempt to access Robin's flower bed
     static func access() -> String {
         return "UNAUTHORISED ACCESS WARNING!! CONTACTING ROBIN!!"
     }
 }
 
-// App entry point (no args)
-func printUsage() {
-    print("Usage: sunny <system> <number>")
-    print("Systems:")
-    print("  coupe <km>      - COUP DE BURST: move north by <km> km")
-    print("  chicken <km>    - CHICKEN VOYAGE: move south by <km> km")
-    print("  rabbit <km>     - RABBIT SCREW: move north by <km> km")
-    print("  cannon <power>  - GAON CANNON: fire with power level")
-    print("  dock <1-6>      - SOLDIER DOCK SYSTEM: describe + launch vehicle")
-    print("  garden <1-14>   - USOPP'S GARDEN: show Pop Green info")
-    print("  mikan <n>       - NAMI’S GARDEN: access warning (number ignored)")
-    print("  fluer <n>       - ROBIN’S FLOWERS: access warning (number ignored)")
-}
+// MAIN SQUEEZE
 
-// App entry point (with args)
-let args = CommandLine.arguments
-if args.count == 1 {
-    print("\n=== THE THOUSAND SUNNY'S CURRENT COORDINATES ===\n")
-    print("Fetching current location...")
-
-    if let loc = Coordinate.getUserLocation() {
-        print("  Latitude:  \(loc.latitude.hemiFormat(as: .latitude))")
-        print("  Longitude: \(loc.longitude.hemiFormat(as: .longitude))")
-    } else {
-        print("Unable to determine current coordinates.")
-    }
-
-    print("\nTip: run with arguments, e.g.\n  sunny coupe 2\n  sunny dock 3\n")
-    printUsage()
-} else {
-    let cmd = args[1].lowercased()
-
-    if args.count < 3 {
-        print("Missing number argument.\n")
-        printUsage()
-
-        exit(1)
-    }
-
-    let numberStr = args[2]
-    let numberDouble = Double(numberStr)
-    let numberInt = Int(numberStr)
-
-    switch cmd {
-    case "coupe":
-        guard let km = numberDouble, km >= 0 else {
-            print("Invalid km: \(numberStr)")
-
-            exit(1)
-        }
-        if let start = Coordinate.getUserLocation() {
-            print("Initial Position:")
-            print("  Latitude:  \(start.latitude.hemiFormat(as: .latitude))")
-            print("  Longitude: \(start.longitude.hemiFormat(as: .longitude))")
-
-            let end = CoupDeBurst.execute(from: start, distanceKm: km)
-
-            print("New Position:")
-            print("  Latitude:  \(end.latitude.hemiFormat(as: .latitude))")
-            print("  Longitude: \(end.longitude.hemiFormat(as: .longitude))")
-        } else {
-            print("Unable to determine current coordinates.")
-        }
-
-    case "chicken":
-        guard let km = numberDouble, km >= 0 else {
-            print("Invalid km: \(numberStr)")
-
-            exit(1)
-        }
-        if let start = Coordinate.getUserLocation() {
-            print("Initial Position:")
-            print("  Latitude:  \(start.latitude.hemiFormat(as: .latitude))")
-            print("  Longitude: \(start.longitude.hemiFormat(as: .longitude))")
-
-            let end = ChickenVoyage.execute(from: start, distanceKm: km)
-
-            print("New Position:")
-            print("  Latitude:  \(end.latitude.hemiFormat(as: .latitude))")
-            print("  Longitude: \(end.longitude.hemiFormat(as: .longitude))")
-        } else {
-            print("Unable to determine current coordinates.")
-        }
-
-    case "rabbit":
-        guard let km = numberDouble, km >= 0 else {
-            print("Invalid km: \(numberStr)")
-
-            exit(1)
-        }
-        if let start = Coordinate.getUserLocation() {
-            let _ = RabbitScrew.sukuryū(from: start, distanceKm: km)
-        } else {
-            print("Unable to determine current coordinates.")
-        }
-
-    case "cannon":
-        guard let power = numberInt, power >= 0 else {
-            print("Invalid power: \(numberStr)")
-
-            exit(1)
-        }
-        GaonCannon.ガオン砲(power: power)
-
-    case "dock":
-        guard let idx = numberInt, let dock = SoldierDock(rawValue: idx) else {
-            print("Invalid dock number: \(numberStr). Use 1-6.")
-
-            exit(1)
-        }
-        dock.displayInfo(for: dock)
-        dock.launch()
-
-    case "garden":
-        guard let idx = numberInt, let pg = Garden(rawValue: idx) else {
-            print("Invalid Pop Green number: \(numberStr). Use 1-14.")
-
-            exit(1)
-        }
-        pg.displayInfo(for: pg)
-
-    case "mikan":
-        print(MikanGrove.access())
-
-    case "fluer":
-        print(FlowerBed.access())
-
-    default:
-        print("Unknown system: \(cmd)\n")
-        printUsage()
-
-        exit(1)
-    }
-}
+main()
